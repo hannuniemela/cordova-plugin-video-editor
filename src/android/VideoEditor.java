@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -363,6 +364,9 @@ public class VideoEditor extends CordovaPlugin {
                     outStream = new FileOutputStream(outputFile);
                     bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outStream);
 
+                    String mmrOrientation = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+                    setExifTagOrientationToFile(outputFile, mmrOrientation);
+
                     callback.success(outputFilePath);
 
                 } catch (Throwable e) {
@@ -381,6 +385,30 @@ public class VideoEditor extends CordovaPlugin {
 
             }
         });
+    }
+
+    private setExifTagOrientationToFile(String outputFile, String orientation) {
+        try {
+            ExifInterface exif = null;
+            exif = new ExifInterface(outputFile);
+
+            if (orientation.equals("0")) {
+                exif.setAttribute(ExifInterface.TAG_ORIENTATION, ORIENTATION_NORMAL)
+            }
+            else if (orientation.equals("90")) {
+                exif.setAttribute(ExifInterface.TAG_ORIENTATION, ORIENTATION_ROTATE_90)
+            }
+            else if (orientation.equals("180")) {
+                exif.setAttribute(ExifInterface.TAG_ORIENTATION, ORIENTATION_ROTATE_180)
+            }
+            else if (orientation.equals("270")) {
+                exif.setAttribute(ExifInterface.TAG_ORIENTATION, ORIENTATION_ROTATE_270)
+            }
+            exif.saveAttributes();
+        }
+        catch (Throwable e) {
+            Log.d(TAG, "exception on exif data setting", e);
+        }
     }
 
     /**
